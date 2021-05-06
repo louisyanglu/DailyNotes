@@ -21,4 +21,5 @@
 2.  `git diff`
 3.  `git add 文件`
 4.  `git commit -m ""`
-5.  `git push`
+5.  `git push`（如果提示Time out将clashX切换到全局试试）
+
