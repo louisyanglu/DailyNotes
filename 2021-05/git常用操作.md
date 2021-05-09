@@ -98,3 +98,145 @@
 3.  把本地库的所有内容推送到远程库上`git push -u origin master`
 
     由于远程库是空的，我们第一次推送`master`分支时，加上了`-u`参数，Git不但会把本地的`master`分支内容推送的远程新的`master`分支，还会把本地的`master`分支和远程的`master`分支关联起来，在以后的推送或者拉取时就可以简化命令。
+    
+4.  查看远程库`git remote -v`
+
+5.  推送分支。把该分支上的所有本地提交推送到远程库。`git push origin 本地分支`
+
+6.  如果推送失败，则因为远程分支比你的本地更新，需要先用`git pull`试图合并；
+
+    ![image-20210509152402820](https://raw.githubusercontent.com/louisyanglu/TyporaImages/master/20210509152408.png)
+
+    -   直接使用`git pull`：![](https://raw.githubusercontent.com/louisyanglu/TyporaImages/master/20210509153216.png)
+    -   将本地分支与远程分支关联起来：`git branch --set-upstream-to=origin/dev dev`
+    -   再`git pull`
+    -   再解决冲突，提交
+
+7.  如果合并有冲突，则解决冲突，并在本地提交；
+
+------
+
+## 分支
+
+### 分支指针
+
+1.  `HEAD`严格来说不是指向提交，而是指向`master`，`master`才是指向提交的，所以，`HEAD`指向的就是当前分支
+
+    ![](https://raw.githubusercontent.com/louisyanglu/TyporaImages/master/20210509123208.png)
+
+2.  每次提交，`master`分支都会向前移动一步，这样，随着你不断提交，`master`分支的线也越来越长
+
+### 创建分支
+
+1.  当我们创建新的分支，例如`dev`时，Git新建了一个指针叫`dev`，指向`master`相同的提交
+
+    ```python
+    git branch dev  # 创建分支
+    ```
+
+2.  把`HEAD`指向`dev`，就表示当前分支在`dev`上
+
+    ![git-br-create](https://raw.githubusercontent.com/louisyanglu/TyporaImages/master/20210509123347.png)
+
+    ```python
+    git checkout dev  # 切换分支
+    git switch dev
+    
+    git checkout -b dev  # 创建、切换分支
+    git switch -c dev
+    git switch -c dev origin/dev  # 创建分支，对应于远程库中的dev分支
+    
+    git branch  # 查看分支，当前分支前面会标一个*号
+    ```
+
+3.  从现在开始，对工作区的修改和提交就是针对`dev`分支了，比如新提交一次后，`dev`指针往前移动一步，而`master`指针不变
+
+    ![git-br-dev-fd](https://raw.githubusercontent.com/louisyanglu/TyporaImages/master/20210509123422.png)
+
+### 合并分支
+
+1.  假如我们在`dev`上的工作完成了，就可以把`dev`合并到`master`上。Git怎么合并呢？最简单的方法，就是直接把`master`指向`dev`的当前提交，就完成了合并
+
+    ![git-br-ff-merge](https://raw.githubusercontent.com/louisyanglu/TyporaImages/master/20210509123556.png)
+
+    ```python
+    # 1、在dev分支做完工作
+    # 2、切换回主分支
+    git checkout master
+    # 3、master合并dev分支
+    git merge dev  # 合并指定分支(dev)到当前分支(master)
+    ```
+
+2.  默认使用`Fast forward`模式，这种模式下，删除分支后，会丢掉分支信息
+
+3.  强制禁用`Fast forward`模式，Git就会在merge时**生成一个新的commit**，这样，从分支历史上就可以看出分支信息
+
+    ```python
+    git merge --no-ff -m "merge with no-ff" dev  # 禁用Fast forward模式
+    # 使用git log --graph 查看分支历史图
+    git log --graph --pretty=oneline --abbrev-commit
+    ```
+
+    ![git-no-ff-mode](https://raw.githubusercontent.com/louisyanglu/TyporaImages/master/20210509131735.png)
+
+### 删除分支
+
+1.  合并完分支后，甚至可以删除`dev`分支。删除`dev`分支就是把`dev`指针给删掉，删掉后，我们就剩下了一条`master`分支
+
+    ![git-br-rm](https://raw.githubusercontent.com/louisyanglu/TyporaImages/master/20210509123633.png)
+
+    ```python
+    git branch -d dev  # 删除分支
+
+### 解决合并冲突
+
+1.  dev分支和master同时修改文件，然后将dev合并到master会出现冲突
+
+    ![git-br-feature1](https://raw.githubusercontent.com/louisyanglu/TyporaImages/master/20210509130822.png)
+
+2.  必须手动解决冲突，然后提交
+
+    ![git-br-conflict-merged](https://raw.githubusercontent.com/louisyanglu/TyporaImages/master/20210509130902.png)
+
+### 暂存任务
+
+1.  Git还提供了一个`stash`功能，可以把当前工作现场“储藏”起来，等以后恢复现场后继续工作
+
+    ```python
+    git stash  # 暂存任务
+    git stash list  # 查看暂存任务列表
+    
+    git stash apply stash@{0}  # 恢复任务
+    git stash drop stash@{0}  # 删除任务列表中的任务
+    git stash pop  # 恢复任务，并在列表删除
+    ```
+
+### 复制修改
+
+1.  master分支上有个bug需要修改文件，dev分支是早期从master分支分出来的，所以，这个bug其实在当前dev分支上也存在
+
+2.  可以直接把master分支上所做的修改复制到dev分支。注意：我们只想复制`4c805e2 fix bug 101`这个提交所做的修改，并不是把整个master分支merge过来
+
+    ```python
+    git cherry-pick 4c805e2  # git cherry-pick 复制特定提交到当前分支，避免重复劳动
+    ```
+
+------
+
+## 标签
+
+### 创建标签
+
+1.  `git tag <name>`就可以打一个新标签
+2.  `git tag v0.9 f52c633`对历史提交打标签
+3.  `git tag -a v0.1 -m "version 0.1 released" 1094adb`对历史提交创建有说明的标签
+4.  `git tag`查看标签
+5.  `git show <tagname>`查看标签信息
+
+### 操作标签
+
+1.  `git tag -d v0.1`删除本地标签
+2.  标签都只存储在本地，不会自动推送到远程。要推送某个标签到远程，使用命令`git push origin <tagname>`
+3.  一次性推送全部尚未推送到远程的本地标签`git push origin --tags`
+4.  `git push origin :refs/tags/<tagname>`可以删除一个远程标签
+
