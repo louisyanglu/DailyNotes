@@ -653,3 +653,4 @@ for train_index, test_index in tscv.split(X):
     ![image-20210603125507146](https://raw.githubusercontent.com/louisyanglu/TyporaImages/master/20210603125507.png)
 
     使用基于sigmoid的损失函数进行优化
+
